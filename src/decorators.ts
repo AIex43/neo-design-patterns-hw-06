@@ -1,32 +1,39 @@
-import { IMessageService } from './IMessageService';
+import 'reflect-metadata';
 
-function pad(num: number): string {
-  return num < 10 ? `0${num}` : `${num}`;
+function formatDate(date: Date): string {
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  const YYYY = date.getFullYear();
+  const MM = pad(date.getMonth() + 1);
+  const DD = pad(date.getDate());
+  const hh = pad(date.getHours());
+  const mm = pad(date.getMinutes());
+  const ss = pad(date.getSeconds());
+  return `${YYYY}-${MM}-${DD} ${hh}:${mm}:${ss}`;
 }
 
-export function withTimestamp(
-  _target: IMessageService,
-  _propertyKey: string,
-  descriptor: PropertyDescriptor
-): PropertyDescriptor {
-  const original = descriptor.value;
-  descriptor.value = function(this: any, message: string): void {
-    const now = new Date();
-    const ts = `[${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}` +
-               ` ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}] `;
-    original.call(this, ts + message);
+export function withTimestamp() {
+  return function (
+    target: any,
+    propertyKey: string,
+    descriptor: PropertyDescriptor
+  ) {
+    const original = descriptor.value;
+    descriptor.value = function (message: string) {
+      const ts = `[${formatDate(new Date())}]`;
+      return original.call(this, `${ts} ${message}`);
+    };
   };
-  return descriptor;
 }
 
-export function uppercase(
-  _target: IMessageService,
-  _propertyKey: string,
-  descriptor: PropertyDescriptor
-): PropertyDescriptor {
-  const original = descriptor.value;
-  descriptor.value = function(this: any, message: string): void {
-    original.call(this, message.toUpperCase());
+export function uppercase() {
+  return function (
+    target: any,
+    propertyKey: string,
+    descriptor: PropertyDescriptor
+  ) {
+    const original = descriptor.value;
+    descriptor.value = function (message: string) {
+      return original.call(this, message.toUpperCase());
+    };
   };
-  return descriptor;
 }
